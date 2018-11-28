@@ -31,16 +31,33 @@ public class Board {
     {{9, 5}, {13, 12}}
   };
 
-  private Integer board[] = new Integer[ARRAY_SIZE];
-  private boolean pegs[]  = new boolean[ARRAY_SIZE];
+  private boolean board[]  = new boolean[ARRAY_SIZE];
   private List<Integer[]> solution = new ArrayList<Integer[]>();
+  private boolean solved = false;
 
   public Board() {
     for (Integer i = 0; i < ARRAY_SIZE; i++)
     {
-      board[i] = i + 1;
-      pegs[i] = true;
+      board[i] = true;
     }
+  }
+
+  private void drawBoard() {
+    char toDraw[] = new char[ARRAY_SIZE];
+
+    for (int i = 0; i < ARRAY_SIZE; i++) {
+      if (pegIsPresent(i)) {
+        toDraw[i] = PRESENT_CHAR;
+      } else {
+        toDraw[i] = MISSING_CHAR;
+      }
+    }
+
+    System.out.println("     " + toDraw[0]);
+    System.out.println("    "  + toDraw[1]  + " " + toDraw[2]);
+    System.out.println("   "   + toDraw[3]  + " " + toDraw[4]  + " " + toDraw[5]);
+    System.out.println("  "    + toDraw[6]  + " " + toDraw[7]  + " " + toDraw[8]  + " " + toDraw[9]);
+    System.out.println(" "     + toDraw[10] + " " + toDraw[11] + " " + toDraw[12] + " " + toDraw[13] + " " +toDraw[14]);
   }
 
   private boolean isInvalidPegIndex(Integer peg) {
@@ -52,7 +69,7 @@ public class Board {
       return false;
     }
 
-    return pegs[peg];
+    return board[peg];
   }
 
   private boolean pegIsAbsent(Integer peg) {
@@ -77,7 +94,7 @@ public class Board {
       return;
     }
     
-    pegs[peg] = set;
+    board[peg] = set;
   }
 
   private void removePeg(Integer peg) {
@@ -89,16 +106,26 @@ public class Board {
   }
 
   private void init(Integer startPeg) {
+    solved = false;
     removePeg(startPeg);
-    solve();
   }
   private void init() {
     init(DEFAULT_START_PEG);
   }
 
+  public void play(Integer peg) {
+    if (isInvalidPegIndex(peg)) {
+      printLine("Invalid peg (" + peg + ") provided. Defaulting to " + DEFAULT_START_PEG);
+      peg = DEFAULT_START_PEG;
+    }
+
+    init(peg);
+    solve();
+  }
 
   private void solve() {
     if (currentNumberOfPegs() == 1) {
+      solved = true;
       return;
     }
 
@@ -117,9 +144,23 @@ public class Board {
           continue;
         }
 
-        boolean savedBoard[] = pegs.clone();
+        boolean savedBoard[] = board.clone();
+        removePeg(peg);
+        removePeg(over);
+        addPeg(to);
 
+        Integer moveArray[] = {from, over, to};
+        solution.add(moveArray);
 
+        solve();
+        if (currentNumberOfPegs() == 1) {
+          solved = true;
+          return;
+        }
+
+        board = savedBoard;
+
+        solution.remove(solution.size() - 1);
       }
 
     }
@@ -142,7 +183,14 @@ public class Board {
 
     Board board = new Board();
 
-    board.init();
+    board.play(0);
+
+    if (board.solved) {
+      printLine("Solved!");
+      board.drawBoard();
+    } else {
+      printLine("Could not solve puzzle...");
+    }
   }
 
 }
