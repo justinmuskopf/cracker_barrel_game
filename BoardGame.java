@@ -1,7 +1,6 @@
-
 import java.util.Arrays;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class BoardGame {
   // Constants
@@ -10,37 +9,48 @@ public class BoardGame {
   private static final Integer TO = 1;
   private static final Integer DEFAULT_START_PEG = 0;
 
+  // Characters to display when printing board
   private static final char PRESENT_CHAR = 'x';
   private static final char MISSING_CHAR = '.';
 
-  private static final Integer[][][] Moves = {
-    {{1, 3}, {2, 5}},
-    {{3, 6}, {4, 8}},
-    {{4, 7}, {5, 9}},
-    {{1, 0}, {6, 10}, {7, 12}, {4, 5}},
-    {{7, 11}, {8, 13}},
-    {{2, 0}, {4, 3}, {8, 12}, {9, 14}},
-    {{3, 1}, {7, 8}},
-    {{4, 2}, {8, 9}},
-    {{4, 1}, {7, 6}},
-    {{8, 7}},
-    {{11, 12}},
-    {{7, 4}, {12, 13}},
-    {{7, 3}, {8, 5}, {11, 10}, {13, 14}},
-    {{8, 4}, {12, 11}},
-    {{9, 5}, {13, 12}}
+  //     0
+  //    1 2
+  //   3 4 5
+  //  6 7 8 9
+  // A B C D E
+  //
+  // For each MOVE: {x, y}
+  //    x - Peg to jump over (OVER)
+  //    y - Position to land in (TO)
+  private static final Integer[][][] MOVES = {
+    { {1, 3}, {2, 5} }, // 0
+    { {3, 6}, {4, 8} }, // 1 
+    { {4, 7}, {5, 9} }, // 2
+    { {1, 0}, {6, 10}, {7, 12}, {4, 5} }, // 3
+    { {7, 11}, {8, 13} }, // 4
+    { {2, 0}, {4, 3}, {8, 12}, {9, 14} }, // 5
+    { {3, 1}, {7, 8} }, // 6
+    { {4, 2}, {8, 9} }, // 7
+    { {4, 1}, {7, 6} }, // 8
+    { {8, 7}, {5, 2} }, // 9
+    { {11, 12}, {6, 3} }, // 10/A
+    { {7, 4}, {12, 13} }, // 11/B
+    { {7, 3}, {8, 5},  {11, 10}, {13, 14} }, // 12/C
+    { {8, 4}, {12, 11} }, // 13/D
+    { {9, 5}, {13, 12} }  // 14/E
   };
 
+  // The game board (true - Peg Present, false - Peg Absent)
   private boolean[] board  = new boolean[ARRAY_SIZE];
+
+  // The current running solution (Modified by solve())
   private List<String> solution = new ArrayList<String>();
+
   private boolean solved = false;
 
   // Default constructor
   public BoardGame() {
-    for (Integer i = 0; i < ARRAY_SIZE; i++)
-    {
-      board[i] = true;
-    }
+    reset();
   }
 
   // Return the character this peg should be in string
@@ -48,6 +58,7 @@ public class BoardGame {
     return (pegIsPresent(peg)) ? PRESENT_CHAR : MISSING_CHAR;
   }
 
+  // Draw the board to a string
   private String drawBoard() {
     String boardString;
 
@@ -60,8 +71,10 @@ public class BoardGame {
     boardString  = "     " + toDraw[0] + "\n";
     boardString += "    "  + toDraw[1]  + " " + toDraw[2] + "\n";
     boardString += "   "   + toDraw[3]  + " " + toDraw[4]  + " " + toDraw[5] + "\n";
-    boardString += "  "    + toDraw[6]  + " " + toDraw[7]  + " " + toDraw[8]  + " " + toDraw[9] + "\n";
-    boardString += " "     + toDraw[10] + " " + toDraw[11] + " " + toDraw[12] + " " + toDraw[13] + " " +toDraw[14] + "\n";
+    boardString += "  "    + toDraw[6]  + " " + toDraw[7]  + " " + toDraw[8]  + " "
+                           + toDraw[9]  + "\n";
+    boardString += " "     + toDraw[10] + " " + toDraw[11] + " " + toDraw[12] + " "
+                           + toDraw[13] + " " + toDraw[14] + "\n";
 
     return boardString;
   }
@@ -85,9 +98,8 @@ public class BoardGame {
   private Integer currentNumberOfPegs() {
     Integer numPegs = 0;
 
-    for (Integer i = 0; i < ARRAY_SIZE; i++)
-    {
-      if (pegIsPresent(i)) {
+    for (boolean present : board) {
+      if (present) {
         numPegs++;
       }
     }
@@ -95,7 +107,7 @@ public class BoardGame {
     return numPegs;
   }
 
-  private void setPeg(Integer peg, boolean set) {
+  private void updatePeg(Integer peg, boolean set) {
     if (isInvalidPegIndex(peg)) {
       return;
     }
@@ -104,11 +116,11 @@ public class BoardGame {
   }
 
   private void removePeg(Integer peg) {
-    setPeg(peg, false);
+    updatePeg(peg, false);
   }
 
   private void addPeg(Integer peg) {
-    setPeg(peg, true);
+    updatePeg(peg, true);
   }
 
   private void reset() {
@@ -120,10 +132,10 @@ public class BoardGame {
   }
 
   // Initialize board with starting peg
-  private void initializeBoard(Integer startPeg) {
+  private void initializeBoard(Integer peg) {
     reset();
     solved = false;
-    removePeg(startPeg);
+    removePeg(peg);
 
     solution.add(drawBoard());
   }
@@ -150,7 +162,7 @@ public class BoardGame {
       peg = DEFAULT_START_PEG;
     }
 
-    printLine("Playing for " + peg);
+    printLine(" === " + peg + " ===");
 
     // Initialize and solve board
     initializeBoard(peg);
@@ -167,21 +179,23 @@ public class BoardGame {
     return play(DEFAULT_START_PEG);
   }
 
+  // Puzzle is solved when # of present pegs is 1
   private boolean puzzleIsSolved() {
     return (currentNumberOfPegs() == 1);
   }
 
-  private boolean isInvalidMove(Integer over, Integer to) {
-    return (pegIsAbsent(over) || pegIsPresent(to));
+  // A valid move requires the FROM & OVER pegs to be present, and TO to be absent
+  private boolean isInvalidMove(Integer from, Integer over, Integer to) {
+    return (pegIsAbsent(from) || pegIsAbsent(over) || pegIsPresent(to));
   }
 
   private boolean doMove(Integer from, Integer over, Integer to) {
-    if (isInvalidMove(over, to)) {
+    if (isInvalidMove(from, over, to)) {
       return false;
     }
 
     // Remove the peg that's jumping, and the one jumping over
-    removePeg(from);;
+    removePeg(from);
     removePeg(over);
 
     // Peg is now where it landed
@@ -207,7 +221,7 @@ public class BoardGame {
       }
 
       // For each move of this peg...
-      for (Integer[] move : Moves[peg]) {
+      for (Integer[] move : MOVES[peg]) {
         int from = peg;        // Move origin
         int over = move[OVER]; // Peg moving over
         int to   = move[TO];   // Peg moving to
@@ -242,7 +256,7 @@ public class BoardGame {
 
   // Print wrapper because I'm lazy
   public static void print(String toPrint) {
-    System.out.println(toPrint);
+    System.out.print(toPrint);
   }
 
   // See previous comment
@@ -252,9 +266,12 @@ public class BoardGame {
 
   public static void main(String[] args) {
     BoardGame boardGame = new BoardGame();
-
+    
+    // Play for the first 5 pegs
     for (int peg = 0; peg < 5; peg++) {
-      print(boardGame.play(peg));
+      String solution = boardGame.play(peg);
+
+      print(solution);
     }
   }
 }
